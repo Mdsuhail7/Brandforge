@@ -186,4 +186,5 @@ const channelMeta = {
 
 ---
 
-Made with ✦ for hackathons
+
+
