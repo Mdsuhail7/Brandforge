@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BrandForge AI — Content Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#080810; --s1:#0e0e1c; --s2:#141428; --s3:#1c1c38; --s4:#252545;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.12);
+  --text:#eeeef8; --text2:#8888b0; --text3:#4a4a70;
+  --violet:#7c5cfc; --violet2:#9b7ffe; --pink:#f06292;
+  --amber:#ffb347; --teal:#2dd4bf; --sky:#38bdf8;
+  --green:#4ade80; --red:#f87171;
+  --r:12px; --rs:8px; --rxs:6px;
+  --tr:0.18s cubic-bezier(0.4,0,0.2,1);
+}
+html,body{height:100%;}
+body{font-family:'Instrument Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.5;overflow-x:hidden;}
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--s4);border-radius:2px;}
+
+/* ── API KEY GATE ─────────────────────────────────────────────────────────── */
+#apiGate{
+  position:fixed;inset:0;background:var(--bg);z-index:9999;
+  display:flex;align-items:center;justify-content:center;padding:1.5rem;
+}
+.gate-box{
+  background:var(--s1);border:1px solid var(--border2);border-radius:16px;
+  padding:2.5rem;width:100%;max-width:440px;text-align:center;
+}
+.gate-gem{
+  width:56px;height:56px;border-radius:14px;
+  background:linear-gradient(135deg,var(--violet),var(--pink));
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;margin:0 auto 1.5rem;
+  box-shadow:0 0 30px rgba(124,92,252,0.4);
+}
+.gate-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px;}
+.gate-sub{font-size:13px;color:var(--text2);margin-bottom:1.75rem;line-height:1.6;}
+.gate-input-wrap{position:relative;margin-bottom:1rem;}
+.gate-input{
+  width:100%;padding:11px 44px 11px 14px;font-size:13px;
+  background:var(--s2);border:1px solid var(--border2);border-radius:var(--rs);
+  color:var(--text);font-family:'Instrument Sans',sans-serif;
+  transition:border-color var(--tr),box-shadow var(--tr);
+}
+.gate-input:focus{outline:none;border-color:rgba(124,92,252,0.6);box-shadow:0 0 0 3px rgba(124,92,252,0.12);}
+.gate-eye{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;
+  transition:color var(--tr);
+}
+.gate-eye:hover{color:var(--text2);}
+.gate-btn{
+  width:100%;padding:12px;font-size:14px;font-weight:700;font-family:'Syne',sans-serif;
+  border:none;border-radius:var(--rs);
+  background:linear-gradient(135deg,var(--violet),var(--pink));
+  color:#fff;cursor:pointer;transition:all var(--tr);
+}
+.gate-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(124,92,252,0.4);}
+.gate-note{font-size:11px;color:var(--text3);margin-top:1rem;line-height:1.6;}
+.gate-note a{color:var(--violet2);text-decoration:none;}
+.gate-note a:hover{text-decoration:underline;}
+.gate-err{font-size:12px;color:var(--red);margin-top:8px;display:none;}
+
+/* ── LAYOUT ───────────────────────────────────────────────────────────────── */
+#appShell{display:none;}
+.app{display:grid;grid-template-columns:310px 1fr;min-height:100vh;}
+
+/* ── SIDEBAR ──────────────────────────────────────────────────────────────── */
+.sidebar{
+  background:var(--s1);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+}
+.sb-head{
+  padding:1.5rem 1.5rem 1.25rem;
+  background:linear-gradient(170deg,#0d0d22 0%,var(--s1) 100%);
+  border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.logo-wrap{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;}
+.logo-gem{
+  width:38px;height:38px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--violet),var(--pink));
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  box-shadow:0 0 20px rgba(124,92,252,0.4);position:relative;
+}
+.logo-gem::after{content:'';position:absolute;inset:0;border-radius:10px;border:1px solid rgba(255,255,255,0.2);}
+.logo-title{
+  font-family:'Syne',sans-serif;font-size:16px;font-weight:800;letter-spacing:-0.02em;line-height:1.1;
+  background:linear-gradient(90deg,#c4b5fd,#f9a8d4 80%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.logo-sub{font-size:10px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;margin-top:1px;}
+.progress-track{display:flex;gap:4px;}
+.progress-seg{flex:1;height:2px;border-radius:2px;background:var(--border2);transition:background var(--tr);}
+.progress-seg.done{background:linear-gradient(90deg,var(--violet),var(--pink));}
+
+.sb-body{padding:0 1.25rem;flex:1;display:flex;flex-direction:column;}
+.sb-section{padding:1.1rem 0;border-bottom:1px solid var(--border);}
+.sb-section:last-child{border-bottom:none;}
+.sec-label{
+  display:flex;align-items:center;gap:7px;
+  font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:10px;
+}
+.sec-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.field{margin-bottom:9px;}
+.field:last-child{margin-bottom:0;}
+label{font-size:11.5px;color:var(--text2);display:block;margin-bottom:4px;font-weight:500;}
+input,select,textarea{
+  width:100%;font-size:12.5px;border:1px solid var(--border2);border-radius:var(--rs);
+  padding:7px 10px;background:var(--s2);color:var(--text);
+  font-family:'Instrument Sans',sans-serif;
+  transition:border-color var(--tr),box-shadow var(--tr);-webkit-appearance:none;
+}
+textarea{resize:vertical;min-height:60px;line-height:1.55;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(124,92,252,0.6);box-shadow:0 0 0 3px rgba(124,92,252,0.12);}
+input::placeholder,textarea::placeholder{color:var(--text3);}
+select option{background:var(--s2);color:var(--text);}
+
+.tone-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.tone-btn{
+  padding:7px 6px;font-size:11px;font-weight:500;
+  border:1px solid var(--border2);border-radius:var(--rxs);
+  background:var(--s2);color:var(--text2);cursor:pointer;text-align:center;
+  transition:all var(--tr);font-family:'Instrument Sans',sans-serif;line-height:1.2;
+}
+.tone-btn:hover{border-color:rgba(124,92,252,0.4);color:var(--text);background:var(--s3);}
+.tone-btn.active{border-color:var(--violet);background:rgba(124,92,252,0.18);color:#c4b5fd;font-weight:600;box-shadow:0 0 12px rgba(124,92,252,0.15);}
+
+.channel-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.ch-chip{
+  display:flex;align-items:center;gap:7px;padding:8px 10px;
+  border:1px solid var(--border2);border-radius:var(--rs);background:var(--s2);
+  cursor:pointer;transition:all var(--tr);user-select:none;
+}
+.ch-chip:hover{border-color:rgba(255,255,255,0.18);background:var(--s3);}
+.ch-chip.on{
+  border-color:color-mix(in srgb,var(--ch-clr) 50%,transparent);
+  background:color-mix(in srgb,var(--ch-clr) 10%,var(--s2));
+}
+.ch-indicator{width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--text3);transition:all var(--tr);}
+.ch-chip.on .ch-indicator{background:var(--ch-clr);border-color:var(--ch-clr);box-shadow:0 0 6px var(--ch-clr);}
+.ch-emoji{font-size:13px;line-height:1;}
+.ch-name{font-size:11.5px;font-weight:500;color:var(--text2);}
+.ch-chip.on .ch-name{color:var(--text);}
+.ch-count{margin-left:auto;font-size:9px;font-weight:600;letter-spacing:0.08em;color:var(--text3);text-transform:uppercase;}
+
+.sb-footer{padding:1.25rem;flex-shrink:0;border-top:1px solid var(--border);}
+.api-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);padding:0 1.25rem 1rem;}
+.api-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);flex-shrink:0;}
+.change-key-btn{
+  margin-left:auto;font-size:10px;color:var(--text3);background:none;border:none;
+  cursor:pointer;font-family:'Instrument Sans',sans-serif;
+  transition:color var(--tr);
+}
+.change-key-btn:hover{color:var(--text2);}
+
+.gen-btn{
+  width:100%;padding:13px 16px;font-size:14px;font-weight:700;font-family:'Syne',sans-serif;
+  letter-spacing:0.01em;border:none;border-radius:var(--r);
+  background:linear-gradient(135deg,var(--violet) 0%,var(--pink) 100%);
+  color:#fff;cursor:pointer;transition:all var(--tr);
+  position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.gen-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.15),transparent);opacity:0;transition:opacity var(--tr);}
+.gen-btn:hover:not(:disabled)::before{opacity:1;}
+.gen-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 32px rgba(124,92,252,0.5);}
+.gen-btn:disabled{opacity:0.4;cursor:not-allowed;}
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.65s linear infinite;display:none;flex-shrink:0;}
+.gen-btn.loading .spinner{display:block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── MAIN ─────────────────────────────────────────────────────────────────── */
+.main{display:flex;flex-direction:column;padding:1.75rem 2rem;gap:1.5rem;min-height:100vh;}
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;}
+.page-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.03em;line-height:1.1;}
+.page-title em{font-style:normal;background:linear-gradient(90deg,var(--violet2),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.page-sub{font-size:13px;color:var(--text2);margin-top:4px;}
+.topbar-actions{display:flex;gap:8px;align-items:center;flex-shrink:0;}
+.top-btn{
+  display:flex;align-items:center;gap:6px;padding:8px 14px;font-size:12.5px;font-weight:500;
+  border:1px solid var(--border2);border-radius:var(--rs);background:var(--s1);color:var(--text2);
+  cursor:pointer;font-family:'Instrument Sans',sans-serif;transition:all var(--tr);
+}
+.top-btn:hover{color:var(--text);background:var(--s2);}
+.top-btn.primary{background:linear-gradient(135deg,rgba(124,92,252,0.2),rgba(240,98,146,0.2));border-color:rgba(124,92,252,0.35);color:var(--violet2);}
+.top-btn.primary:hover{border-color:var(--violet);background:rgba(124,92,252,0.25);}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.stat-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px;background:var(--sg);}
+.stat-val{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;line-height:1;color:var(--text);}
+.stat-label{font-size:10.5px;color:var(--text3);margin-top:5px;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;}
+.stat-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:22px;opacity:0.08;}
+
+.output-wrap{flex:1;}
+.empty{
+  height:400px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;background:var(--s1);border:1px dashed rgba(255,255,255,0.08);
+  border-radius:var(--r);padding:2rem;
+}
+.empty-orb{
+  width:88px;height:88px;border-radius:50%;
+  background:radial-gradient(circle at 40% 40%,rgba(124,92,252,0.4),rgba(240,98,146,0.2),transparent 70%);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-size:36px;
+  border:1px solid rgba(124,92,252,0.2);animation:pulse-orb 3s ease-in-out infinite;
+}
+@keyframes pulse-orb{0%,100%{box-shadow:0 0 0 0 rgba(124,92,252,0.3);}50%{box-shadow:0 0 40px 10px rgba(124,92,252,0.1);}}
+.empty-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px;}
+.empty-desc{font-size:13.5px;color:var(--text2);line-height:1.65;max-width:340px;}
+.empty-btn{
+  margin-top:1.5rem;padding:11px 24px;font-size:13px;font-weight:700;font-family:'Syne',sans-serif;
+  border:none;border-radius:var(--rs);background:linear-gradient(135deg,var(--violet),var(--pink));
+  color:#fff;cursor:pointer;transition:all var(--tr);
+}
+.empty-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(124,92,252,0.4);}
+
+.output-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.out-card{
+  background:var(--s1);border:1px solid var(--border);border-radius:var(--r);
+  display:flex;flex-direction:column;overflow:hidden;
+  transition:border-color var(--tr);animation:card-in 0.4s cubic-bezier(0.4,0,0.2,1) both;
+}
+.out-card:hover{border-color:var(--border2);}
+@keyframes card-in{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.card-stripe{height:2px;background:var(--cg);flex-shrink:0;}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.card-platform{display:flex;align-items:center;gap:8px;}
+.platform-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.platform-label{font-size:12.5px;font-weight:600;color:var(--text);}
+.card-acts{display:flex;gap:5px;}
+.c-btn{
+  width:28px;height:28px;border:1px solid var(--border2);border-radius:var(--rxs);
+  background:transparent;color:var(--text3);cursor:pointer;font-size:13px;
+  display:flex;align-items:center;justify-content:center;transition:all var(--tr);font-family:inherit;
+}
+.c-btn:hover{background:var(--s3);color:var(--text);border-color:rgba(255,255,255,0.2);}
+.c-btn:disabled{opacity:0.3;cursor:not-allowed;}
+.c-btn.success{color:var(--green);border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.08);}
+.card-body{padding:14px;flex:1;}
+.card-text{font-size:13.5px;line-height:1.75;color:var(--text);white-space:pre-wrap;min-height:80px;}
+.stream-cursor{display:inline-block;width:2px;height:13px;border-radius:1px;background:var(--violet);animation:blink 0.75s infinite;vertical-align:middle;margin-left:1px;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+.card-foot{padding:8px 14px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.foot-pill{background:var(--s3);border-radius:20px;padding:2px 8px;font-size:10.5px;font-weight:500;color:var(--text3);}
+.foot-regen{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);background:transparent;border:none;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-weight:500;padding:4px 8px;border-radius:var(--rxs);transition:all var(--tr);}
+.foot-regen:hover{background:var(--s3);color:var(--text);}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:9999;pointer-events:none;}
+.toast{display:flex;align-items:center;gap:10px;padding:11px 16px;background:var(--s3);border:1px solid rgba(255,255,255,0.1);border-radius:var(--rs);font-size:13px;color:var(--text);box-shadow:0 8px 32px rgba(0,0,0,0.5);pointer-events:auto;animation:toast-in 0.3s cubic-bezier(0.4,0,0.2,1) both;}
+.toast.out{animation:toast-out 0.25s cubic-bezier(0.4,0,0.2,1) both;}
+@keyframes toast-in{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+@keyframes toast-out{from{opacity:1;transform:none;}to{opacity:0;transform:translateY(10px);}}
+
+@media(max-width:960px){
+  .app{grid-template-columns:1fr;}
+  .sidebar{position:static;height:auto;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .output-grid{grid-template-columns:1fr;}
+}
+@media(max-width:560px){
+  .main{padding:1.25rem;}
+  .topbar{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ API KEY GATE ════════════════════════════════════ -->
+<div id="apiGate">
+  <div class="gate-box">
+    <div class="gate-gem">✦</div>
+    <div class="gate-title">BrandForge AI</div>
+    <div class="gate-sub">Enter your Anthropic API key to start.<br/>It stays in your browser only — never sent anywhere else.</div>
+    <div class="gate-input-wrap">
+      <input class="gate-input" type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off" onkeydown="if(event.key==='Enter')startApp()"/>
+      <button class="gate-eye" id="eyeBtn" onclick="toggleEye()" title="Show/hide key">👁</button>
+    </div>
+    <div class="gate-err" id="gateErr">Please enter a valid Anthropic API key (starts with sk-ant-)</div>
+    <button class="gate-btn" onclick="startApp()">Launch Studio →</button>
+    <div class="gate-note">
+      Don't have a key? Get one free at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a><br/>
+      Your key is stored only in <code>sessionStorage</code> and cleared when you close the tab.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ APP ══════════════════════════════════════════════ -->
+<div id="appShell">
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="logo-wrap">
+        <div class="logo-gem">✦</div>
+        <div>
+          <div class="logo-title">BrandForge AI</div>
+          <div class="logo-sub">Intelligent Content Studio</div>
+        </div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-seg" id="ps1"></div>
+        <div class="progress-seg" id="ps2"></div>
+        <div class="progress-seg" id="ps3"></div>
+        <div class="progress-seg" id="ps4"></div>
+      </div>
+    </div>
+
+    <div class="sb-body">
+      <!-- Brand -->
+      <div class="sb-section">
+        <div class="sec-label"><div class="sec-dot" style="background:var(--violet)"></div>Brand identity</div>
+        <div class="field"><label>Brand name</label><input type="text" id="brandName" value="Lumina" placeholder="e.g. Lumina" maxlength="100" oninput="onFieldChange()"/></div>
+        <div class="field"><label>Industry / niche</label><input type="text" id="industry" value="Sustainable skincare" maxlength="200"/></div>
+        <div class="field"><label>Brand values</label><input type="text" id="values" value="eco-conscious, clean beauty, empowering" maxlength="300"/></div>
+        <div class="field"><label>Unique selling proposition</label><textarea id="usp" rows="3" maxlength="500">100% plant-based formulas with zero harmful chemicals, packaged in compostable materials</textarea></div>
+      </div>
+      <!-- Audience -->
+      <div class="sb-section">
+        <div class="sec-label"><div class="sec-dot" style="background:var(--pink)"></div>Target audience</div>
+        <div class="field"><label>Who they are</label><textarea id="audience" rows="2" maxlength="400">Eco-conscious women, 25–40, urban, health-forward lifestyle</textarea></div>
+        <div class="field"><label>Pain points</label><input type="text" id="painPoints" value="toxic ingredients, plastic waste, greenwashing" maxlength="300"/></div>
+      </div>
+      <!-- Tone -->
+      <div class="sb-section">
+        <div class="sec-label"><div class="sec-dot" style="background:var(--amber)"></div>Tone of voice</div>
+        <div class="tone-grid">
+          <button class="tone-btn active" data-tone="warm & empowering">Warm &amp; empowering</button>
+          <button class="tone-btn" data-tone="bold & direct">Bold &amp; direct</button>
+          <button class="tone-btn" data-tone="playful & witty">Playful &amp; witty</button>
+          <button class="tone-btn" data-tone="expert & authoritative">Expert &amp; authoritative</button>
+          <button class="tone-btn" data-tone="minimal & refined">Minimal &amp; refined</button>
+          <button class="tone-btn" data-tone="conversational">Conversational</button>
+        </div>
+      </div>
+      <!-- Campaign -->
+      <div class="sb-section">
+        <div class="sec-label"><div class="sec-dot" style="background:var(--teal)"></div>Campaign</div>
+        <div class="field"><label>Objective</label>
+          <select id="objective">
+            <option>Product launch</option><option>Brand awareness</option>
+            <option>Lead generation</option><option>Customer retention</option>
+            <option>Seasonal promotion</option><option>Educational / thought leadership</option>
+          </select>
+        </div>
+        <div class="field"><label>Campaign brief</label><textarea id="brief" rows="3" maxlength="1000">Launching our new Glow Serum — a vitamin C + bakuchiol blend for radiant, youthful skin without retinol's side effects.</textarea></div>
+      </div>
+      <!-- Channels -->
+      <div class="sb-section">
+        <div class="sec-label"><div class="sec-dot" style="background:var(--sky)"></div>Channels<span class="ch-count" id="chCountLabel" style="margin-left:auto">4 selected</span></div>
+        <div class="channel-grid">
+          <div class="ch-chip on" style="--ch-clr:#38bdf8" data-ch="twitter" onclick="toggleCh(this)"><div class="ch-indicator"></div><span class="ch-emoji">𝕏</span><span class="ch-name">Twitter</span></div>
+          <div class="ch-chip on" style="--ch-clr:#f06292" data-ch="instagram" onclick="toggleCh(this)"><div class="ch-indicator"></div><span class="ch-emoji">📸</span><span class="ch-name">Instagram</span></div>
+          <div class="ch-chip" style="--ch-clr:#818cf8" data-ch="linkedin" onclick="toggleCh(this)"><div class="ch-indicator"></div><span class="ch-emoji">in</span><span class="ch-name">LinkedIn</span></div>
+          <div class="ch-chip on" style="--ch-clr:#ffb347" data-ch="email" onclick="toggleCh(this)"><div class="ch-indicator"></div><span class="ch-emoji">✉</span><span class="ch-name">Email</span></div>
+          <div class="ch-chip" style="--ch-clr:#4ade80" data-ch="blog" onclick="toggleCh(this)"><div class="ch-indicator"></div><span class="ch-emoji">📝</span><span class="ch-name">Blog</span></div>
+          <div class="ch-chip on" style="--ch-clr:#f87171" data-ch="ad" onclick="toggleCh(this)"><div class="ch-indicator"></div><span class="ch-emoji">📢</span><span class="ch-name">Ad copy</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="api-status">
+      <div class="api-dot"></div>
+      <span>API connected</span>
+      <button class="change-key-btn" onclick="changeKey()">Change key</button>
+    </div>
+
+    <div class="sb-footer">
+      <button class="gen-btn" id="genBtn" onclick="generate()">
+        <div class="spinner" id="spinner"></div>
+        <span id="genBtnText">✦ Generate content</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Content <em>Studio</em></div>
+        <div class="page-sub">AI-powered, brand-consistent copy for every platform</div>
+      </div>
+      <div class="topbar-actions" id="topbarActions" style="display:none">
+        <button class="top-btn" onclick="exportAll()">⬇ Export</button>
+        <button class="top-btn" onclick="copyAll()">⊕ Copy all</button>
+        <button class="top-btn primary" onclick="generate()">↻ Regenerate</button>
+      </div>
+    </div>
+
+    <div class="stats-row" id="statsRow" style="display:none">
+      <div class="stat-card" style="--sg:linear-gradient(90deg,#7c5cfc,#9b7ffe)"><div class="stat-val" id="statChannels">0</div><div class="stat-label">Channels</div><div class="stat-icon">⬡</div></div>
+      <div class="stat-card" style="--sg:linear-gradient(90deg,#f06292,#f48fb1)"><div class="stat-val" id="statWords">0</div><div class="stat-label">Total words</div><div class="stat-icon">✍</div></div>
+      <div class="stat-card" style="--sg:linear-gradient(90deg,#ffb347,#ffd580)"><div class="stat-val" id="statChars">0</div><div class="stat-label">Characters</div><div class="stat-icon">≡</div></div>
+      <div class="stat-card" style="--sg:linear-gradient(90deg,#2dd4bf,#5eead4)"><div class="stat-val" id="statTime">0s</div><div class="stat-label">Gen. time</div><div class="stat-icon">◷</div></div>
+    </div>
+
+    <div class="output-wrap" id="outputWrap">
+      <div class="empty" id="emptyState">
+        <div class="empty-orb">✦</div>
+        <div class="empty-title">Ready to create</div>
+        <div class="empty-desc">Configure your brand on the left, pick your channels, and hit Generate. Content will be uniquely crafted for each platform.</div>
+        <button class="empty-btn" onclick="generate()">✦ Generate content</button>
+      </div>
+      <div class="output-grid" id="outputGrid" style="display:none"></div>
+    </div>
+  </main>
+</div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ── STATE ───────────────────────────────────────────────────────────────── */
+let API_KEY = '';
+let selectedTone = 'warm & empowering';
+let activeChannels = new Set(['twitter','instagram','email','ad']);
+let isGenerating = false;
+let allTexts = {};
+let genStart = 0;
+let timerTick = null;
+
+const CHANNEL_META = {
+  twitter:   { label:'Twitter / X',    dot:'#38bdf8', grad:'linear-gradient(90deg,#38bdf8,#7dd3fc)',  constraint:'280 characters max. Punchy hook + message + 1-2 hashtags. Make it shareable.' },
+  instagram: { label:'Instagram',       dot:'#f06292', grad:'linear-gradient(90deg,#f06292,#f48fb1)',  constraint:'150-300 chars. Emotional opener + story + 4-5 hashtags. Visual, sensory language.' },
+  linkedin:  { label:'LinkedIn',        dot:'#818cf8', grad:'linear-gradient(90deg,#818cf8,#a5b4fc)',  constraint:'200-300 chars. Lead with insight, deliver value, clear CTA. Build authority.' },
+  email:     { label:'Email campaign',  dot:'#ffb347', grad:'linear-gradient(90deg,#ffb347,#ffd580)',  constraint:'Format: Subject: [line]\nPreview: [text]\n\n[Body ~120 words: intro + benefit + CTA]. Warm, personal.' },
+  blog:      { label:'Blog post',       dot:'#4ade80', grad:'linear-gradient(90deg,#4ade80,#86efac)',  constraint:'SEO intro ~100 words + 3 H2 subheading ideas. Hook readers immediately.' },
+  ad:        { label:'Ad copy',         dot:'#f87171', grad:'linear-gradient(90deg,#f87171,#fca5a5)',  constraint:'3 variants, each: Headline (≤6 words) | Subheadline (≤12 words) | CTA (≤4 words). Label each.' },
+};
+
+/* ── API KEY GATE ─────────────────────────────────────────────────────────── */
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = sessionStorage.getItem('bf_api_key');
+  if (saved) { API_KEY = saved; showApp(); }
+
+  document.querySelectorAll('.tone-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedTone = btn.dataset.tone;
+    });
+  });
+});
+
+function toggleEye() {
+  const inp = document.getElementById('apiKeyInput');
+  const btn = document.getElementById('eyeBtn');
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁'; }
+}
+
+function startApp() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  const err = document.getElementById('gateErr');
+  if (!key.startsWith('sk-ant-') && !key.startsWith('sk-')) {
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+  API_KEY = key;
+  sessionStorage.setItem('bf_api_key', key);
+  showApp();
+}
+
+function showApp() {
+  document.getElementById('apiGate').style.display = 'none';
+  document.getElementById('appShell').style.display = 'block';
+}
+
+function changeKey() {
+  sessionStorage.removeItem('bf_api_key');
+  API_KEY = '';
+  document.getElementById('apiKeyInput').value = '';
+  document.getElementById('apiGate').style.display = 'flex';
+  document.getElementById('appShell').style.display = 'none';
+}
+
+/* ── CHANNELS ─────────────────────────────────────────────────────────────── */
+function toggleCh(el) {
+  el.classList.toggle('on');
+  const ch = el.dataset.ch;
+  activeChannels.has(ch) ? activeChannels.delete(ch) : activeChannels.add(ch);
+  document.getElementById('chCountLabel').textContent = activeChannels.size + ' selected';
+}
+
+function onFieldChange() { updateProgress(); }
+function updateProgress() {
+  const name = document.getElementById('brandName').value.trim();
+  ['ps1','ps2','ps3','ps4'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.className = 'progress-seg' + (name && i < 2 ? ' done' : '');
+  });
+}
+
+function getBrand() {
+  return {
+    name:       document.getElementById('brandName').value.trim(),
+    industry:   document.getElementById('industry').value.trim(),
+    values:     document.getElementById('values').value.trim(),
+    usp:        document.getElementById('usp').value.trim(),
+    audience:   document.getElementById('audience').value.trim(),
+    painPoints: document.getElementById('painPoints').value.trim(),
+    tone:       selectedTone,
+    objective:  document.getElementById('objective').value,
+    brief:      document.getElementById('brief').value.trim(),
+  };
+}
+
+/* ── GENERATE ─────────────────────────────────────────────────────────────── */
+async function generate() {
+  if (isGenerating) return;
+  const channels = [...activeChannels];
+  if (!channels.length) { toast('Select at least one channel','⚠'); return; }
+  const brand = getBrand();
+  if (!brand.name) { toast('Enter a brand name first','⚠'); return; }
+
+  isGenerating = true;
+  allTexts = {};
+  genStart = Date.now();
+
+  const btn = document.getElementById('genBtn');
+  btn.disabled = true; btn.classList.add('loading');
+  document.getElementById('genBtnText').textContent = 'Generating…';
+
+  ['ps1','ps2','ps3'].forEach(id => document.getElementById(id).classList.add('done'));
+  document.getElementById('ps4').classList.remove('done');
+
+  document.getElementById('statsRow').style.display = 'grid';
+  document.getElementById('statChannels').textContent = channels.length;
+  document.getElementById('statWords').textContent = '…';
+  document.getElementById('statChars').textContent = '…';
+  document.getElementById('statTime').textContent = '0.0s';
+
+  clearInterval(timerTick);
+  timerTick = setInterval(() => {
+    document.getElementById('statTime').textContent = ((Date.now()-genStart)/1000).toFixed(1)+'s';
+  }, 100);
+
+  document.getElementById('emptyState').style.display = 'none';
+  const grid = document.getElementById('outputGrid');
+  grid.style.display = 'grid'; grid.innerHTML = '';
+  channels.forEach(ch => createCard(ch, grid));
+
+  await Promise.all(channels.map(ch => streamChannel(ch, brand)));
+
+  clearInterval(timerTick);
+  const elapsed = ((Date.now()-genStart)/1000).toFixed(1);
+  document.getElementById('statTime').textContent = elapsed+'s';
+  updateStats();
+  document.getElementById('ps4').classList.add('done');
+
+  isGenerating = false;
+  btn.disabled = false; btn.classList.remove('loading');
+  document.getElementById('genBtnText').textContent = '✦ Generate content';
+  document.getElementById('topbarActions').style.display = 'flex';
+  toast(`Generated ${channels.length} pieces in ${elapsed}s`, '✦');
+}
+
+function updateStats() {
+  const totalChars = Object.values(allTexts).reduce((a,t) => a+t.length, 0);
+  const totalWords = Object.values(allTexts).reduce((a,t) => a+t.trim().split(/\s+/).filter(Boolean).length, 0);
+  document.getElementById('statChars').textContent = totalChars.toLocaleString();
+  document.getElementById('statWords').textContent = totalWords.toLocaleString();
+}
+
+function createCard(ch, grid) {
+  const meta = CHANNEL_META[ch];
+  const card = document.createElement('div');
+  card.className = 'out-card'; card.id = 'card-'+ch;
+  card.style.animationDelay = [...activeChannels].indexOf(ch)*0.06+'s';
+  card.innerHTML = `
+    <div class="card-stripe" style="--cg:${meta.grad};background:${meta.grad}"></div>
+    <div class="card-head">
+      <div class="card-platform">
+        <div class="platform-dot" style="background:${meta.dot};box-shadow:0 0 6px ${meta.dot}"></div>
+        <div class="platform-label">${meta.label}</div>
+      </div>
+      <div class="card-acts">
+        <button class="c-btn" title="Regenerate" onclick="regenOne('${ch}')">↻</button>
+        <button class="c-btn" id="copy-${ch}" title="Copy" onclick="copyOne('${ch}')" disabled>⊕</button>
+      </div>
+    </div>
+    <div class="card-body"><div class="card-text" id="text-${ch}"><span class="stream-cursor"></span></div></div>
+    <div class="card-foot">
+      <span class="foot-pill" id="count-${ch}">generating…</span>
+      <button class="foot-regen" onclick="regenOne('${ch}')">↻ Regen</button>
+    </div>`;
+  grid.appendChild(card);
+}
+
+/* ── STREAM ───────────────────────────────────────────────────────────────── */
+async function streamChannel(ch, brand) {
+  const textEl  = document.getElementById('text-'+ch);
+  const countEl = document.getElementById('count-'+ch);
+  const copyBtn = document.getElementById('copy-'+ch);
+  textEl.innerHTML = '<span class="stream-cursor"></span>';
+  let fullText = '';
+
+  const meta = CHANNEL_META[ch];
+  const prompt = `You are an elite brand content strategist.
+
+BRAND: ${brand.name} | ${brand.industry}
+VALUES: ${brand.values}
+USP: ${brand.usp}
+AUDIENCE: ${brand.audience}
+PAIN POINTS: ${brand.painPoints}
+OBJECTIVE: ${brand.objective}
+BRIEF: ${brand.brief}
+TONE: ${brand.tone}
+
+CHANNEL: ${meta.label}
+REQUIREMENTS: ${meta.constraint}
+
+Write ONLY the final content. No preamble, no labels, no markdown fences. Make it feel genuinely crafted for this brand and platform.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-request-allowed': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 700,
+        stream: true,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    textEl.innerHTML = '';
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += dec.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const payload = line.slice(6).trim();
+        if (payload === '[DONE]') {
+          buffer = '';
+          break;
+        }
+        try {
+          const parsed = JSON.parse(payload);
+          const deltaText = parsed.delta?.text ?? parsed.delta?.content ?? parsed.content;
+          if (typeof deltaText === 'string' && deltaText.length) {
+            fullText += deltaText;
+            textEl.textContent = fullText;
+          }
+        } catch(e) {
+          // ignore malformed or non-JSON payload fragments
+        }
+      }
+    }
+
+    allTexts[ch] = fullText;
+    const words = fullText.trim().split(/\s+/).filter(Boolean).length;
+    countEl.textContent = `${fullText.length} chars · ${words} words`;
+    copyBtn.disabled = false;
+
+  } catch(err) {
+    textEl.innerHTML = `<span style="color:var(--red);font-size:12.5px">⚠ ${err.message} — click ↻ to retry</span>`;
+    countEl.textContent = 'failed';
+  }
+}
+
+/* ── ACTIONS ──────────────────────────────────────────────────────────────── */
+async function regenOne(ch) {
+  if (isGenerating) return;
+  const brand = getBrand();
+  document.getElementById('copy-'+ch).disabled = true;
+  delete allTexts[ch];
+  await streamChannel(ch, brand);
+  updateStats();
+}
+
+async function copyOne(ch) {
+  const text = allTexts[ch]; if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    const btn = document.getElementById('copy-'+ch);
+    btn.textContent = '✓'; btn.classList.add('success');
+    setTimeout(() => { btn.textContent = '⊕'; btn.classList.remove('success'); }, 2000);
+    toast('Copied!', '✓');
+  } catch { toast('Copy failed','✗'); }
+}
+
+async function copyAll() {
+  if (!Object.keys(allTexts).length) { toast('Nothing to copy yet','⚠'); return; }
+  const text = Object.entries(allTexts).map(([ch,t]) => `═══ ${CHANNEL_META[ch].label.toUpperCase()} ═══\n${t}`).join('\n\n');
+  try { await navigator.clipboard.writeText(text); toast('All content copied!','✓'); }
+  catch { toast('Copy failed','✗'); }
+}
+
+function exportAll() {
+  if (!Object.keys(allTexts).length) { toast('Nothing to export yet','⚠'); return; }
+  const brand = getBrand();
+  const header = `BrandForge AI — Content Export\nBrand: ${brand.name} | ${new Date().toLocaleString()}\n${'═'.repeat(50)}\n\n`;
+  const body = Object.entries(allTexts).map(([ch,t]) => `${CHANNEL_META[ch].label.toUpperCase()}\n${'─'.repeat(30)}\n${t}`).join('\n\n');
+  const blob = new Blob([header+body], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${brand.name.replace(/\s+/g,'-').toLowerCase()}-content.txt`;
+  a.click();
+  toast('Exported!','⬇');
+}
+
+function toast(msg, icon='✦') {
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<span>${icon}</span>${msg}`;
+  wrap.appendChild(el);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 300); }, 2800);
+}
+</script>
+</body>
+</html>
